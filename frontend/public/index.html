@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - Movie Reservation System</title>
+    <link rel="stylesheet" href="css/user.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">MR</div>
+            <h2>User Portal</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-link active" data-tab="dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-link" data-tab="movies">
+                <i class="fas fa-film"></i>
+                <span>Movies</span>
+            </a>
+            <a href="#" class="nav-link" data-tab="reservations">
+                <i class="fas fa-ticket-alt"></i>
+                <span>My Reservations</span>
+            </a>
+            <a href="#" class="nav-link" data-tab="profile">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#" class="nav-link logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="header-left">
+                <h1 class="page-title">Dashboard</h1>
+                <div class="theater-badge">
+                    <i class="fas fa-building"></i>
+                    <span>CineMax Downtown</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="current-time" id="currentTime">
+                    <i class="fas fa-clock"></i>
+                    <span>--:-- --</span>
+                </div>
+                <div class="user-profile">
+                    <i class="fas fa-user-circle"></i>
+                    <span>John Doe</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Tab -->
+        <section class="content-section active" id="dashboard-section">
+            <div class="welcome-card">
+                <div class="welcome-content">
+                    <h2>Welcome back, John! 👋</h2>
+                    <p>Ready to watch some amazing movies?</p>
+                </div>
+                <div class="welcome-icon">
+                    <i class="fas fa-film"></i>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon bookings">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Bookings</h3>
+                        <p class="stat-value">12</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon upcoming">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Upcoming Movies</h3>
+                        <p class="stat-value">3</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon spent">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Spent</h3>
+                        <p class="stat-value">$180</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-progress-card">
+                <h3>Profile Completion</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 75%"></div>
+                </div>
+                <p class="progress-text">75% Complete - Add profile picture to complete</p>
+            </div>
+
+            <div class="upcoming-movies">
+                <h3>Upcoming Movies This Week</h3>
+                <div class="upcoming-list">
+                    <div class="upcoming-item">
+                        <div class="upcoming-poster">🎬</div>
+                        <div class="upcoming-details">
+                            <h4>Inception</h4>
+                            <p>Tomorrow at 7:00 PM</p>
+                        </div>
+                        <span class="upcoming-seats">2 Seats</span>
+                    </div>
+                    <div class="upcoming-item">
+                        <div class="upcoming-poster">🚀</div>
+                        <div class="upcoming-details">
+                            <h4>Interstellar</h4>
+                            <p>Oct 22 at 8:00 PM</p>
+                        </div>
+                        <span class="upcoming-seats">1 Seat</span>
+                    </div>
+                    <div class="upcoming-item">
+                        <div class="upcoming-poster">🦇</div>
+                        <div class="upcoming-details">
+                            <h4>The Dark Knight</h4>
+                            <p>Oct 24 at 9:00 PM</p>
+                        </div>
+                        <span class="upcoming-seats">3 Seats</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Movies Tab -->
+        <section class="content-section" id="movies-section">
+            <div class="section-header">
+                <h2>Available Movies</h2>
+                <div class="filter-controls">
+                    <select class="filter-select" id="genreFilter">
+                        <option value="all">All Genres</option>
+                        <option value="action">Action</option>
+                        <option value="sci-fi">Sci-Fi</option>
+                        <option value="drama">Drama</option>
+                        <option value="thriller">Thriller</option>
+                    </select>
+                </div>
+            </div>
+            <div class="movies-grid" id="moviesGrid">
+                <!-- Movies will be dynamically loaded here -->
+            </div>
+        </section>
+
+        <!-- My Reservations Tab -->
+        <section class="content-section" id="reservations-section">
+            <div class="section-header">
+                <h2>My Reservations</h2>
+                <div class="filter-controls">
+                    <select class="filter-select" id="statusFilter">
+                        <option value="all">All Bookings</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="past">Past</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Movie</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Seats</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reservationsTable">
+                        <!-- Reservations will be dynamically loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Profile Tab -->
+        <section class="content-section" id="profile-section">
+            <div class="profile-container">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <button class="btn-upload">
+                            <i class="fas fa-camera"></i> Change Photo
+                        </button>
+                    </div>
+                    <div class="profile-form">
+                        <div class="form-group">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullName" class="form-input" value="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" class="form-input" value="john.doe@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" class="form-input" value="+1 234 567 8900">
+                        </div>
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" class="form-input" placeholder="Enter current password">
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" class="form-input" placeholder="Enter new password">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn-primary" id="updateProfileBtn">
+                                <i class="fas fa-save"></i> Update Profile
+                            </button>
+                            <button class="btn-secondary" id="cancelBtn">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="account-info-card">
+                    <h3>Account Information</h3>
+                    <div class="info-item">
+                        <span class="info-label">Member Since:</span>
+                        <span class="info-value">January 15, 2024</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Total Bookings:</span>
+                        <span class="info-value">12</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Account Status:</span>
+                        <span class="info-value status-active">Active</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Loyalty Points:</span>
+                        <span class="info-value">240 pts</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Booking Modal -->
+    <div class="modal" id="bookingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Book Movie</h3>
+                <button class="modal-close" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Modal content will be dynamically loaded -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/user.js"></script>
+</body>
+</html>
