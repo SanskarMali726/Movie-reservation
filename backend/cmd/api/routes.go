@@ -7,8 +7,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 
@@ -126,12 +129,25 @@ func EditMovie(w http.ResponseWriter,r *http.Request){
 		writeJSONError(w,"Invalid Request",http.StatusBadRequest)
 		return
 	}
+
 	var input Input
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil{
 		writeJSONError(w,"Internal Server Error",http.StatusInternalServerError)
+		fmt.Println(err)
 		return 
 	}
+	defer r.Body.Close()
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	movieID,err := strconv.Atoi(id)
+	if err != nil{
+		writeJSONError(w,"Invalid Movie ID",http.StatusBadRequest)
+		return
+	}
+
 
 	parsedDate, err := time.Parse("2006-01-02", input.ReleaseDate)
 		if err != nil {
@@ -148,16 +164,16 @@ func EditMovie(w http.ResponseWriter,r *http.Request){
         PosterURL:   input.PosterURL,
         Rating:      input.Rating,
         Language:    input.Language,
-        Status:      input.Status,
         UpdatedAt:   time.Now(),
 	}
 
  	_, err = db.Exec(`
         UPDATE movies
-        SET title =$1, genre =$2, rating =$3, relese_date =$4,description =$5,duration =$6,language =$7,updated_at=$8,poster_url=$9
-        WHERE id=$10`, movie.Title, movie.Genre, movie.Rating, movie.ReleaseDate,movie.Description,movie.Duration,movie.Language,movie.UpdatedAt,movie.PosterURL)
+        SET title =$1, genre =$2, rating =$3, release_date =$4,description =$5,duration =$6,language =$7,updated_at=$8,poster_url=$9
+        WHERE id= '$10' `, movie.Title, movie.Genre, movie.Rating, movie.ReleaseDate,movie.Description,movie.Duration,movie.Language,movie.UpdatedAt,movie.PosterURL,movieID)
 	if err != nil{
 		writeJSONError(w,"Internal Server Error",http.StatusInternalServerError)
+		fmt.Println(err)
 		return
 	}
 
@@ -204,5 +220,146 @@ func TotalUsers(w http.ResponseWriter,r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(map[string]int{
         "total_User": count,
+    })
+}
+
+func DeleteMovies(w http.ResponseWriter,r *http.Request){
+	if r.Method != http.MethodDelete{
+		writeJSONError(w,"Ivalid Method",http.StatusMethodNotAllowed)
+		return
+	}
+	
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	movieID,err := strconv.Atoi(id)
+	
+	if err != nil{
+		writeJSONError(w,"Invalid Movie ID",http.StatusBadRequest)
+		fmt.Println(err)
+		fmt.Println(id)
+		return
+	}
+	
+	
+	result,err := db.Exec(`DELETE FROM movies WHERE id = $1`,movieID)
+	if err != nil{
+		writeJSONError(w,"Internal server Error",http.StatusInternalServerError)
+		fmt.Println(err)
+		return
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+    if rowsAffected == 0 {
+        writeJSONError(w, "Movie not found", http.StatusNotFound)
+        return
+    }
+
+	w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{
+        "message":"movie deleted successfully",
+    })
+}
+
+func GetAllMovies(w http.ResponseWriter,r *http.Request){
+	if r.Method != http.MethodGet{
+		writeJSONError(w,"Invalid Method",http.StatusMethodNotAllowed)
+		return
+	}
+
+	rows, err := db.Query("SELECT id, title, genre,description, rating, duration, release_date ,poster_url,language FROM movies")
+    if err != nil {
+        writeJSONError(w, "Database error", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+	var movies []Movies
+
+	for rows.Next(){
+		var m Movies
+		err = rows.Scan(&m.Id,&m.Title,&m.Genre,&m.Description, &m.Rating,&m.Duration,&m.ReleaseDate,&m.PosterURL,&m.Language)
+		if err != nil{
+			writeJSONError(w,"Scan Error",http.StatusInternalServerError)
+			return
+		}
+		movies = append(movies, m)
+	}
+	
+	json.NewEncoder(w).Encode(movies)
+}
+
+func UpdateMoviePoster(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPut {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+    
+    movieID, err := strconv.Atoi(id)
+    if err != nil {
+        http.Error(w, "Invalid movie ID", http.StatusBadRequest)
+        return
+    }
+
+    var oldPoster string
+    err = db.QueryRow("SELECT poster_url FROM movies WHERE id = $1", movieID).Scan(&oldPoster)
+    if err != nil {
+        http.Error(w, "Movie not found", http.StatusNotFound)
+        return
+    }
+
+    err = r.ParseMultipartForm(10 << 20)
+    if err != nil {
+        http.Error(w, "Error parsing form data", http.StatusBadRequest)
+        return
+    }
+
+    file, handler, err := r.FormFile("poster")
+    if err != nil {
+        http.Error(w, "Poster file is required", http.StatusBadRequest)
+        return
+    }
+    defer file.Close()
+	
+	ext := strings.ToLower(filepath.Ext(handler.Filename))
+	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+		writeJSONError(w, "Only JPG, JPEG and PNG files are allowed", http.StatusBadRequest)
+		return
+	}
+
+    fileName := fmt.Sprintf("poster_%d%v",time.Now().UnixNano(),ext)
+    filePath := filepath.Join("frontend","public", "uploads", fileName)
+
+    dst, err := os.Create(filePath)
+    if err != nil {
+        http.Error(w, "Failed to save file", http.StatusInternalServerError)
+        return
+    }
+    defer dst.Close()
+    io.Copy(dst, file)
+
+    newPosterPath := "/uploads/" + fileName
+    _, err = db.Exec("UPDATE movies SET poster_url = $1 WHERE id = $2", newPosterPath, movieID)
+    if err != nil {
+        http.Error(w, "Database update failed", http.StatusInternalServerError)
+        return
+    }
+
+
+    if oldPoster != "" {
+        oldFilePath := filepath.Join("frontend","public", "uploads", oldPoster)
+        _, err := os.Stat(oldFilePath)
+		if err == nil {
+            os.Remove(oldFilePath)
+        }
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{
+        "message": "Poster updated successfully",
+        "poster_url":  newPosterPath,
     })
 }

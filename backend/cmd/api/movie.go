@@ -3,6 +3,7 @@ package main
 import "time"
 
 type Movies struct {
+	Id          int       `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description,omitempty"`
 	Genre       string    `json:"genre,omitempty"`
@@ -17,6 +18,7 @@ type Movies struct {
 }
 
 type Input struct {
+	Id          int       `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description,omitempty"`
 	Genre       string    `json:"genre,omitempty"`

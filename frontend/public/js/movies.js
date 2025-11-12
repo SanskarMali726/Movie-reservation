@@ -1,5 +1,3 @@
-
-
 // ==================== Initialize Add Movie Form ====================
 document.addEventListener('DOMContentLoaded', function() {
     initializeAddMovieForm();
@@ -166,7 +164,6 @@ async function addMovie(movieData) {
     }
 }
 
-
 // ==================== File Validation ====================
 function validateFile(file) {
     if (!file) {
@@ -297,7 +294,6 @@ function showNotification(message, type) {
     }, 5000);
 }
 
-
 // ==================== Input Validation Helpers ====================
 document.addEventListener('DOMContentLoaded', function() {
     // Validate rating input (0-5 range)
@@ -327,3 +323,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+
+

@@ -31,6 +31,11 @@ func main() {
 	router.HandleFunc("/api/addmovie",Addmovie).Methods("POST")
 	router.HandleFunc("/api/totalmovie",TotalMovies).Methods("GET")
 	router.HandleFunc("/api/totalusers",TotalUsers).Methods("GET")
+	router.HandleFunc("/api/getallmovies",GetAllMovies).Methods("GET")
+	router.HandleFunc("/api/updateposter/{id}",UpdateMoviePoster).Methods("PUT")
+	router.HandleFunc("/api/updatemovie/{id}",EditMovie).Methods("PUT")
+	router.HandleFunc("/api/deletemovie/{id}",DeleteMovies).Methods("DELETE")
+
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./frontend/login.html")
@@ -47,7 +52,7 @@ func main() {
 	
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://127.0.0.1:5500"},  
+		AllowedOrigins:   []string{"*"},  
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,

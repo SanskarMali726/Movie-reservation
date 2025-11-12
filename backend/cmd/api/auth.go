@@ -17,6 +17,14 @@ func writeJSONError(w http.ResponseWriter, message string, statusCode int) {
     })
 }
 
+func writeJSONResponse(w http.ResponseWriter, message interface{}, statusCode int) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(statusCode)
+    json.NewEncoder(w).Encode(map[string]interface{}{
+        "message": message,
+    })
+}
+
 func Login(w http.ResponseWriter,r *http.Request){
 	if r.Method != http.MethodPost {
         writeJSONError(w, "method not allowed", http.StatusMethodNotAllowed)
