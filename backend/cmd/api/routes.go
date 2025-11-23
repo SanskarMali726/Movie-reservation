@@ -239,19 +239,28 @@ func DeleteMovies(w http.ResponseWriter,r *http.Request){
 		fmt.Println(id)
 		return
 	}
+
+	var oldPoster string
+
+	err = db.QueryRow(`SELECT poster_url FROM movies WHERE id = $1`,movieID).Scan(&oldPoster);
+	if err != nil {
+		writeJSONError(w,"Movie Not Found",http.StatusNotFound)
+		return
+	}
 	
-	
-	result,err := db.Exec(`DELETE FROM movies WHERE id = $1`,movieID)
+	_,err = db.Exec(`DELETE FROM movies WHERE id = $1`,movieID)
 	if err != nil{
 		writeJSONError(w,"Internal server Error",http.StatusInternalServerError)
 		fmt.Println(err)
 		return
 	}
 
-	rowsAffected, _ := result.RowsAffected()
-    if rowsAffected == 0 {
-        writeJSONError(w, "Movie not found", http.StatusNotFound)
-        return
+	if oldPoster != "" {
+        oldFilePath := filepath.Join("frontend","public", oldPoster)
+        _, err := os.Stat(oldFilePath)
+		if err == nil {
+            os.Remove(oldFilePath)
+        }
     }
 
 	w.Header().Set("Content-Type", "application/json")
@@ -349,7 +358,7 @@ func UpdateMoviePoster(w http.ResponseWriter, r *http.Request) {
 
 
     if oldPoster != "" {
-        oldFilePath := filepath.Join("frontend","public", "uploads", oldPoster)
+        oldFilePath := filepath.Join("frontend","public", oldPoster)
         _, err := os.Stat(oldFilePath)
 		if err == nil {
             os.Remove(oldFilePath)
