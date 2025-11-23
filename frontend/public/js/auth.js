@@ -119,8 +119,6 @@ function handleLogin() {
         .then(async (res) => {
             const data = await res.json();
             if (res.ok) {
-                alert(`Login successful as ${selectedRole.toUpperCase()}! Redirecting to dashboard...`);
-
             // Clear form
                 document.getElementById('email').value = '';
                 document.getElementById('password').value = '';
@@ -211,8 +209,6 @@ async function handleSignup() {
             const data = await res.json();
 
             if (res.ok) {
-                alert(`Signup successful as ${selectedRole.toUpperCase()}! Redirecting to login...`);
-
                 // Clear form
                 document.getElementById('name').value = '';
                 document.getElementById('email').value = '';
@@ -230,8 +226,6 @@ async function handleSignup() {
         }
     }
 }
-
-
 
 document.addEventListener('DOMContentLoaded', function() {
     // Get all inputs
@@ -269,3 +263,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+

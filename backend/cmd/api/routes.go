@@ -14,8 +14,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-
-
 func Addmovie(w http.ResponseWriter,r *http.Request){
 	if r.Method != http.MethodPost{
 		writeJSONError(w,"Method Not Allowed",http.StatusMethodNotAllowed)
@@ -149,6 +147,7 @@ func EditMovie(w http.ResponseWriter,r *http.Request){
 	}
 
 
+
 	parsedDate, err := time.Parse("2006-01-02", input.ReleaseDate)
 		if err != nil {
     	writeJSONError(w, "Invalid date format", http.StatusBadRequest)
@@ -170,7 +169,7 @@ func EditMovie(w http.ResponseWriter,r *http.Request){
  	_, err = db.Exec(`
         UPDATE movies
         SET title =$1, genre =$2, rating =$3, release_date =$4,description =$5,duration =$6,language =$7,updated_at=$8,poster_url=$9
-        WHERE id= '$10' `, movie.Title, movie.Genre, movie.Rating, movie.ReleaseDate,movie.Description,movie.Duration,movie.Language,movie.UpdatedAt,movie.PosterURL,movieID)
+        WHERE id= $10 `, movie.Title, movie.Genre, movie.Rating, movie.ReleaseDate,movie.Description,movie.Duration,movie.Language,movie.UpdatedAt,movie.PosterURL,movieID)
 	if err != nil{
 		writeJSONError(w,"Internal Server Error",http.StatusInternalServerError)
 		fmt.Println(err)
