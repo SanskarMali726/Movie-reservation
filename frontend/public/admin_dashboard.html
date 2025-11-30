@@ -8,6 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- Notification -->
+            <div class="notification" id="notification">
+                <div class="notification-content">
+                    <i class="notification-icon"></i>
+                    <span class="notification-message"></span>
+                </div>
+            </div>
+            
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -150,7 +158,7 @@
         <section class="content-section" id="movies-section">
             <div class="section-header">
                 <h2>Manage Movies</h2>
-                <button class="btn-primary" data-tab="add-movie" id="addMovieBtn">
+                <button class="btn-primary" id="addMovieBtn">
                     <i class="fas fa-plus"></i> Add Movie
                 </button>
             </div>
@@ -256,14 +264,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Notification -->
-            <div class="notification" id="notification">
-                <div class="notification-content">
-                    <i class="notification-icon"></i>
-                    <span class="notification-message"></span>
-                </div>
-            </div>
         </section>
 
         <!-- Showtimes Tab -->
@@ -279,10 +279,12 @@
                     <thead>
                         <tr>
                             <th>Movie</th>
+                            <th>Screen</th>
                             <th>Date</th>
                             <th>Time</th>
                             <th>Total Seats</th>
                             <th>Available Seats</th>
+                            <th>Price</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -352,9 +354,173 @@
                 </div>
             </div>
         </section>
+
+        <!-- Add Showtime Modal -->
+        <div class="modal-overlay" id="showtimeModal">
+            <div class="showtime-modal-container">
+                <div class="showtime-modal-header">
+                    <h2><i class="fas fa-clock"></i> Add New Showtime</h2>
+                    <button class="showtime-close-btn" id="closeShowtimeModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="showtime-modal-body">
+                    <div class="showtime-intro-text">
+                        <p><strong>Add a New Showtime</strong></p>
+                        <p>Please fill in the details below to schedule a movie show. Select the movie, choose the screen, pick the show date and time, and set the ticket price.</p>
+                        <p>Total seats will be auto-filled based on the selected screen. If the show will run for multiple days, specify how many days you want to continue the show.</p>
+                    </div>
+
+                    <form id="addShowtimeForm">
+                        <!-- Movie Selection -->
+                        <div class="showtime-form-group">
+                            <label for="showtimeMovie">Select Movie <span class="required">*</span></label>
+                            <div class="showtime-input-group">
+                                <i class="fas fa-film showtime-input-icon"></i>
+                                <select id="showtimeMovie" class="showtime-form-control" required>
+                                    <option value="">Choose the movie that will be shown</option>
+                                    <!-- Movies will be loaded dynamically -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Screen Selection -->
+                        <div class="showtime-form-group">
+                            <label for="showtimeScreen">Select Screen <span class="required">*</span></label>
+                            <div class="showtime-input-group">
+                                <i class="fas fa-tv showtime-input-icon"></i>
+                                <select id="showtimeScreen" class="showtime-form-control" required>
+                                    <option value="">Choose the screen where the movie will be shown</option>
+                                    <option value="1" data-seats="150">Screen 1 (150 seats)</option>
+                                    <option value="2" data-seats="120">Screen 2 (120 seats)</option>
+                                    <option value="3" data-seats="200">Screen 3 (200 seats)</option>
+                                    <option value="4" data-seats="100">Screen 4 (100 seats)</option>
+                                </select>
+                            </div>
+                            <div class="showtime-seat-info" id="seatInfo" style="display: none;">
+                                <i class="fas fa-couch"></i>
+                                <div class="showtime-seat-info-text">
+                                    <strong>Total Seats: <span id="totalSeatsDisplay">0</span></strong>
+                                    <span>Available seats will start as equal to total seats</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date and Time Row -->
+                        <div class="showtime-form-row">
+                            <div class="showtime-form-group">
+                                <label for="showDate">Show Date <span class="required">*</span></label>
+                                <div class="showtime-input-group">
+                                    <i class="fas fa-calendar showtime-input-icon"></i>
+                                    <input type="date" id="showDate" class="showtime-form-control" required>
+                                </div>
+                                <div class="showtime-help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    Select the date on which the show will run
+                                </div>
+                            </div>
+
+                            <div class="showtime-form-group">
+                                <label for="showTime">Show Time <span class="required">*</span></label>
+                                <div class="showtime-input-group">
+                                    <i class="fas fa-clock showtime-input-icon"></i>
+                                    <input type="time" id="showTime" class="showtime-form-control" required>
+                                </div>
+                                <div class="showtime-help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    Select the show time (HH:MM)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price and Total Seats Row -->
+                        <div class="showtime-form-row">
+                            <div class="showtime-form-group">
+                                <label for="ticketPrice">Ticket Price (₹) <span class="required">*</span></label>
+                                <div class="showtime-input-group">
+                                    <i class="fas fa-rupee-sign showtime-input-icon"></i>
+                                    <input type="number" id="ticketPrice" class="showtime-form-control" 
+                                           placeholder="Enter ticket price" value="150" min="1" step="1" required>
+                                </div>
+                                <div class="showtime-help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    Default price is ₹150
+                                </div>
+                            </div>
+
+                            <div class="showtime-form-group">
+                                <label for="totalSeats">Total Seats <span class="required">*</span></label>
+                                <div class="showtime-input-group">
+                                    <i class="fas fa-chair showtime-input-icon"></i>
+                                    <input type="number" id="totalSeats" class="showtime-form-control" 
+                                           placeholder="Auto-filled from screen" readonly>
+                                </div>
+                                <div class="showtime-help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    Auto-filled based on selected screen
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Repeat Days Section -->
+                        <div class="showtime-repeat-section">
+                            <label class="showtime-repeat-label">
+                                <i class="fas fa-sync-alt"></i>
+                                Repeat Show for Multiple Days
+                            </label>
+                            <div class="showtime-repeat-options">
+                                <div class="showtime-repeat-option">
+                                    <input type="radio" id="repeat1" name="repeatDays" value="1" checked>
+                                    <label for="repeat1" class="showtime-repeat-btn">1 Day</label>
+                                </div>
+                                <div class="showtime-repeat-option">
+                                    <input type="radio" id="repeat3" name="repeatDays" value="3">
+                                    <label for="repeat3" class="showtime-repeat-btn">3 Days</label>
+                                </div>
+                                <div class="showtime-repeat-option">
+                                    <input type="radio" id="repeat7" name="repeatDays" value="7">
+                                    <label for="repeat7" class="showtime-repeat-btn">7 Days</label>
+                                </div>
+                                <div class="showtime-repeat-option">
+                                    <input type="radio" id="repeat14" name="repeatDays" value="14">
+                                    <label for="repeat14" class="showtime-repeat-btn">14 Days</label>
+                                </div>
+                                <div class="showtime-repeat-option">
+                                    <input type="radio" id="repeatCustom" name="repeatDays" value="custom">
+                                    <label for="repeatCustom" class="showtime-repeat-btn">Custom</label>
+                                </div>
+                            </div>
+                            <div class="showtime-custom-days" id="customDaysInput">
+                                <label for="customDays">Enter number of days:</label>
+                                <input type="number" id="customDays" class="showtime-form-control" 
+                                       placeholder="Enter days" min="1" max="30">
+                            </div>
+                            <div class="showtime-repeat-info">
+                                <i class="fas fa-info-circle"></i>
+                                <span id="repeatInfoText">The system will create 1 showtime entry</span>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="showtime-form-actions">
+                            <button type="submit" class="showtime-btn showtime-btn-primary">
+                                <i class="fas fa-save"></i>
+                                <span>Add Showtime</span>
+                            </button>
+                            <button type="button" class="showtime-btn showtime-btn-secondary" id="cancelShowtime">
+                                <i class="fas fa-times"></i>
+                                <span>Cancel</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <script src="js/movies.js"></script>
     <script src="js/admin.js"></script>
+    <script src="js/movies.js"></script>
+    <script src="js/showtime.js"></script>
+    
 </body>
 </html>

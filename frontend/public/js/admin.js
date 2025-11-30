@@ -1,64 +1,7 @@
 // ==================== Dummy Data ====================
 let moviesData = []; // Changed from const to let
 
-const showtimesData = [
-    {
-        id: 1,
-        movie: "Inception",
-        date: "2025-10-20",
-        time: "14:00",
-        totalSeats: 150,
-        availableSeats: 45
-    },
-    {
-        id: 2,
-        movie: "The Dark Knight",
-        date: "2025-10-20",
-        time: "17:30",
-        totalSeats: 150,
-        availableSeats: 78
-    },
-    {
-        id: 3,
-        movie: "Interstellar",
-        date: "2025-10-21",
-        time: "19:00",
-        totalSeats: 200,
-        availableSeats: 120
-    },
-    {
-        id: 4,
-        movie: "Pulp Fiction",
-        date: "2025-10-21",
-        time: "21:00",
-        totalSeats: 100,
-        availableSeats: 23
-    },
-    {
-        id: 5,
-        movie: "The Matrix",
-        date: "2025-10-22",
-        time: "15:30",
-        totalSeats: 180,
-        availableSeats: 156
-    },
-    {
-        id: 6,
-        movie: "Inception",
-        date: "2025-10-22",
-        time: "20:00",
-        totalSeats: 150,
-        availableSeats: 12
-    },
-    {
-        id: 7,
-        movie: "The Shawshank Redemption",
-        date: "2025-10-23",
-        time: "18:00",
-        totalSeats: 120,
-        availableSeats: 89
-    }
-];
+const showtimesData = [];
 
 // ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', function() {
@@ -157,7 +100,6 @@ function initializeSidebar() {
 // ==================== Button Handlers ====================
 function initializeButtons() {
     const addMovieBtn = document.getElementById('addMovieBtn');
-    const addShowtimeBtn = document.getElementById('addShowtimeBtn');
 
     if (addMovieBtn) {
         addMovieBtn.addEventListener('click', function(e) {
@@ -191,11 +133,7 @@ function initializeButtons() {
         });
     }
 
-    if (addShowtimeBtn) {
-        addShowtimeBtn.addEventListener('click', function() {
-            alert('Add Showtime functionality will be implemented with backend integration.');
-        });
-    }
+
 }
 
 // ==================== Load Movies ====================
@@ -1066,25 +1004,3 @@ function handleLogout() {
     }
 }
 
-function showNotification(message, type = "success") {
-    const notification = document.getElementById("notification");
-    if (!notification) return;
-    
-    const icon = notification.querySelector(".notification-icon");
-    const messageEl = notification.querySelector(".notification-message");
-    
-    if (type === "success") {
-        icon.className = "notification-icon fas fa-check-circle";
-        notification.style.background = "linear-gradient(135deg, #46d369 0%, #3ba856 100%)";
-    } else {
-        icon.className = "notification-icon fas fa-exclamation-circle";
-        notification.style.background = "linear-gradient(135deg, #e50914 0%, #b8070f 100%)";
-    }
-    
-    messageEl.textContent = message;
-    notification.classList.add("show");
-    
-    setTimeout(() => {
-        notification.classList.remove("show");
-    }, 3000);
-}

@@ -252,7 +252,11 @@ function updatePreview() {
     const title = document.getElementById('movieTitle').value || '-';
     const genre = document.getElementById('movieGenre').value || '-';
     const duration = document.getElementById('movieDuration').value;
-    const rating = document.getElementById('movieRating').value;
+    let rating = document.getElementById('movieRating').value;
+
+    if (rating.length > 1){
+        rating = rating[0];
+    }
     
     document.getElementById('previewTitle').textContent = title;
     document.getElementById('previewGenre').textContent = genre;
@@ -278,20 +282,6 @@ function resetForm() {
     document.getElementById('previewGenre').textContent = '-';
     document.getElementById('previewDuration').textContent = '-';
     document.getElementById('previewRating').textContent = '-';
-}
-
-// ==================== Notification System ====================
-function showNotification(message, type) {
-    const notification = document.getElementById('notification');
-    const messageSpan = notification.querySelector('.notification-message');
-    
-    messageSpan.textContent = message;
-    notification.className = 'notification ' + type + ' show';
-    
-    // Auto hide after 5 seconds
-    setTimeout(function() {
-        notification.classList.remove('show');
-    }, 5000);
 }
 
 // ==================== Input Validation Helpers ====================
