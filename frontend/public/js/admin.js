@@ -839,64 +839,124 @@ function deleteMovie(id) {
 }
 
 // ==================== Load Showtimes ====================
-function loadShowtimes() {
+async function loadShowtimes() {
     const showtimesTable = document.getElementById('showtimesTable');
     if (!showtimesTable) return;
-    
-    showtimesTable.innerHTML = '';
 
-    showtimesData.forEach(function(showtime) {
-        const row = createShowtimeRow(showtime);
-        showtimesTable.appendChild(row);
-    });
+    // Show loading row
+    showtimesTable.innerHTML = `
+        <tr>
+            <td colspan="10" style="text-align:center; padding:10px;">Loading showtimes...</td>
+        </tr>
+    `;
+
+    try {
+        const response = await fetch("http://localhost:8080/api/getallshowtime");
+        const data = await response.json();
+
+        // Clear table
+        showtimesTable.innerHTML = "";
+
+        if (!response.ok) {
+            showNotification("Failed to load showtimes", "error");
+            return;
+        }
+
+        // If no data
+        if (!Array.isArray(data) || data.length === 0) {
+            showtimesTable.innerHTML = `
+                <tr>
+                    <td colspan="10" style="text-align:center; padding:10px;">No showtimes found</td>
+                </tr>
+            `;
+            return;
+        }
+
+        // Loop and insert rows
+        data.forEach(showtime => {
+            const row = createShowtimeRow(showtime);
+            showtimesTable.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Error loading showtimes:", error);
+        showNotification("Error loading showtimes", "error");
+
+        showtimesTable.innerHTML = `
+            <tr>
+                <td colspan="10" style="text-align:center; padding:10px;">Error loading data</td>
+            </tr>
+        `;
+    }
 }
 
+
 function createShowtimeRow(showtime) {
-    const row = document.createElement('tr');
-    
-    const movieCell = document.createElement('td');
-    movieCell.innerHTML = '<strong>' + showtime.movie + '</strong>';
-    
-    const dateCell = document.createElement('td');
-    dateCell.textContent = formatDate(showtime.date);
-    
-    const timeCell = document.createElement('td');
-    timeCell.textContent = formatTime(showtime.time);
-    
-    const totalSeatsCell = document.createElement('td');
-    totalSeatsCell.textContent = showtime.totalSeats;
-    
-    const availableSeatsCell = document.createElement('td');
-    const availableSpan = document.createElement('span');
-    availableSpan.textContent = showtime.availableSeats;
-    availableSpan.style.color = showtime.availableSeats < 20 ? '#ffa500' : '#46d369';
+    console.log(showtime);
+    const row = document.createElement("tr");
+
+    // Movie
+    const movieCell = document.createElement("td");
+    movieCell.innerHTML = `<strong>${showtime.movie_title}</strong>`;
+
+    // Screen  (use screen_id for now)
+    const screenCell = document.createElement("td");
+    screenCell.textContent = `Screen ${showtime.screen_id}`;
+
+    // Date
+    const dateCell = document.createElement("td");
+    dateCell.textContent = formatDate(showtime.show_date);
+
+    // Time (Start - End)
+    const timeCell = document.createElement("td");
+    timeCell.textContent =
+        `${formatTime(showtime.show_time)} - ${formatTime(showtime.end_time)}`;
+
+    // Total Seats
+    const totalSeatsCell = document.createElement("td");
+    totalSeatsCell.textContent = showtime.total_seats;
+
+    // Available Seats
+    const availableSeatsCell = document.createElement("td");
+    const availableSpan = document.createElement("span");
+    const availableSeats = showtime.available_seats ?? showtime.total_seats;
+
+    availableSpan.textContent = availableSeats;
+    availableSpan.style.color = availableSeats < 20 ? "#ffa500" : "#46d369";
     availableSeatsCell.appendChild(availableSpan);
-    
-    const actionsCell = document.createElement('td');
-    actionsCell.className = 'table-actions';
-    
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn-icon';
+
+    // Price
+    const priceCell = document.createElement("td");
+    priceCell.textContent = `₹${showtime.price}`;
+
+    // Actions
+    const actionsCell = document.createElement("td");
+    actionsCell.className = "table-actions";
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn-icon";
     editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-    editBtn.title = 'Edit';
-    editBtn.onclick = function() { editShowtime(showtime.id); };
-    
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'btn-icon delete';
+    editBtn.onclick = () => editShowtime(showtime.id);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn-icon delete";
     deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-    deleteBtn.title = 'Delete';
-    deleteBtn.onclick = function() { deleteShowtime(showtime.id); };
-    
+    deleteBtn.onclick = () => deleteShowtime(showtime.id);
+
     actionsCell.appendChild(editBtn);
     actionsCell.appendChild(deleteBtn);
-    
+
+    // Append cells to row in the same order as table headers:
+    // Movie | Screen | Date | Time | Total Seats | Available Seats | Price | Actions
     row.appendChild(movieCell);
+    row.appendChild(screenCell);
     row.appendChild(dateCell);
     row.appendChild(timeCell);
     row.appendChild(totalSeatsCell);
     row.appendChild(availableSeatsCell);
+    row.appendChild(priceCell);
     row.appendChild(actionsCell);
-    
+
     return row;
 }
 
@@ -984,18 +1044,44 @@ function deleteShowtime(id) {
 
 // ==================== Utility Functions ====================
 function formatDate(dateString) {
-    const date = new Date(dateString);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear();
+    if (!dateString) return "";
+
+    const d = new Date(dateString);
+    if (isNaN(d)) return "";
+
+    return d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+    });
 }
 
+
 function formatTime(timeString) {
-    const parts = timeString.split(':');
-    const hours = parseInt(parts[0]);
-    const minutes = parts[1];
-    const ampm = hours >= 12 ? 'PM' : 'AM';
+    if (!timeString) return "";
+
+    // Handle formats like "YYYY-MM-DDTHH:MM:SSZ" and "HH:MM:SS"
+    let raw = timeString;
+
+    // If there's a 'T', take the part after it (time portion)
+    if (raw.includes("T")) {
+        const parts = raw.split("T");
+        raw = parts[1] || "";
+    }
+
+    // Remove trailing 'Z' if present
+    raw = raw.replace("Z", "");
+
+    const [hourStr, minuteStr] = raw.split(":");
+    if (!hourStr || !minuteStr) return "";
+
+    let hours = parseInt(hourStr, 10);
+    const minutes = minuteStr.padStart(2, "0");
+
+    const ampm = hours >= 12 ? "PM" : "AM";
     const formattedHour = hours % 12 || 12;
-    return formattedHour + ':' + minutes + ' ' + ampm;
+
+    return `${formattedHour}:${minutes} ${ampm}`;
 }
 
 function handleLogout() {

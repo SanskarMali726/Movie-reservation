@@ -481,8 +481,8 @@ func AddShowtime(w http.ResponseWriter, r *http.Request) {
     insertShowtime := func(date string) error {
         _, err := db.Exec(`
             INSERT INTO showtimes (
-                movie_id, screen_id, show_date, start_time, end_time, created_at, updated_at
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+                movie_id, screen_id, show_date, start_time, end_time, created_at, updated_at,price
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
         `,
             show.MovieID,
             show.ScreenID,
@@ -491,13 +491,11 @@ func AddShowtime(w http.ResponseWriter, r *http.Request) {
             endTime.Format("15:04"),
             time.Now(),
             time.Now(),
+			show.Price,
         )
         return err
     }
 
-    // --------------------------------------------------------
-    // INSERT EXACTLY 'RepeatDays' SHOWTIMES
-    // --------------------------------------------------------
     for i := 0; i < show.RepeatDays; i++ {
 
         newDate := parsedDate.AddDate(0, 0, i).Format("2006-01-02")
@@ -519,4 +517,50 @@ func AddShowtime(w http.ResponseWriter, r *http.Request) {
     writeJSONResponse(w, "Showtime(s) Added Successfully", http.StatusCreated)
 }
 
+func GetAllShowtime(w http.ResponseWriter,r *http.Request){
+	if r.Method != http.MethodGet {
+		writeJSONError(w, "Invalid Method", http.StatusMethodNotAllowed)
+		return
+	}
 
+	rows, err := db.Query(`
+        SELECT 
+            s.id,
+            s.movie_id,
+            m.title AS movie_title,
+            s.screen_id,
+            sc.total_seats,
+			sc.available_seats,
+            s.show_date,
+            s.start_time,
+            s.end_time,
+			s.price
+        FROM showtimes s
+        JOIN movies m ON s.movie_id = m.id
+        JOIN screens sc ON s.screen_id = sc.screen_id
+        ORDER BY s.show_date, s.start_time;
+    `)
+
+	if err != nil {
+		writeJSONError(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var shows []Showtime
+
+	for rows.Next() {
+		var show Showtime
+		err = rows.Scan(&show.Id, &show.MovieID,&show.MovieTitle,&show.ScreenID, &show.TotalSeats,&show.AvailableSeats,&show.ShowDate, &show.ShowTime,&show.EndTime,&show.Price)
+		if err != nil {
+			writeJSONError(w, "Scan Error", http.StatusInternalServerError)
+			fmt.Println(err)
+			return
+		}
+		shows = append(shows, show)
+	}
+
+	json.NewEncoder(w).Encode(shows)
+
+
+}

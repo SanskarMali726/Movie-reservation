@@ -36,6 +36,7 @@ func main() {
 	router.HandleFunc("/api/updatemovie/{id}", EditMovie).Methods("PUT")
 	router.HandleFunc("/api/deletemovie/{id}", DeleteMovies).Methods("DELETE")
 	router.HandleFunc("/api/addshowtime", AddShowtime).Methods("POST")
+	router.HandleFunc("/api/getallshowtime", GetAllShowtime).Methods("GET")
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./frontend/login.html")

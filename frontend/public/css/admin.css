@@ -1881,3 +1881,15 @@ body {
     font-size: 16px;
     font-weight: 500;
 }
+
+table thead th {
+    text-align: center !important;
+}
+
+
+table th, 
+table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
