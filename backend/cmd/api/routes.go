@@ -426,7 +426,6 @@ func AddShowtime(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // Can't pick past time if today
     if parsedDate.Equal(today) {
         now := time.Now()
         showDateTime := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(),
@@ -438,7 +437,7 @@ func AddShowtime(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-    // Validate repeat days
+    // Validate repeat
     if show.RepeatDays < 1 {
         writeJSONError(w, "Repeat days must be at least 1", http.StatusBadRequest)
         return
@@ -481,7 +480,7 @@ func AddShowtime(w http.ResponseWriter, r *http.Request) {
     insertShowtime := func(date string) error {
         _, err := db.Exec(`
             INSERT INTO showtimes (
-                movie_id, screen_id, show_date, start_time, end_time, created_at, updated_at,price
+                movie_id, screen_id, show_date, start_time, end_time, created_at, updated_at, price
             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
         `,
             show.MovieID,
@@ -491,31 +490,42 @@ func AddShowtime(w http.ResponseWriter, r *http.Request) {
             endTime.Format("15:04"),
             time.Now(),
             time.Now(),
-			show.Price,
+            show.Price,
         )
         return err
     }
 
-    for i := 0; i < show.RepeatDays; i++ {
+    // COUNTER: to track successful inserts
+    insertedCount := 0
 
+    for i := 0; i < show.RepeatDays; i++ {
         newDate := parsedDate.AddDate(0, 0, i).Format("2006-01-02")
 
         overlap, err := checkOverlap(newDate)
         if err != nil {
-            continue // skip error day
+            continue
         }
         if overlap {
-            continue // skip conflicting day
+            continue
         }
 
         err = insertShowtime(newDate)
         if err != nil {
             continue
         }
+
+        insertedCount++
+    }
+
+    //If NO showtimes were inserted → send error
+    if insertedCount == 0 {
+        writeJSONError(w, "Showtime Overlap! Cannot add showtime.", http.StatusConflict)
+        return
     }
 
     writeJSONResponse(w, "Showtime(s) Added Successfully", http.StatusCreated)
 }
+
 
 func GetAllShowtime(w http.ResponseWriter,r *http.Request){
 	if r.Method != http.MethodGet {
@@ -563,4 +573,37 @@ func GetAllShowtime(w http.ResponseWriter,r *http.Request){
 	json.NewEncoder(w).Encode(shows)
 
 
+}
+
+func DeleteShowtime(w http.ResponseWriter,r *http.Request){
+	if r.Method != http.MethodDelete{
+		writeJSONError(w,"Invalid Method",http.StatusMethodNotAllowed)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+	showId, err := strconv.Atoi(id)
+	if err != nil {
+		writeJSONError(w, "Invalid Show ID", http.StatusBadRequest)
+		return
+	}
+
+	SqlResult, err := db.Exec("DELETE FROM showtimes WHERE id = $1",showId)
+    if err != nil {
+        writeJSONError(w,"Internal Server Error",http.StatusInternalServerError)
+        return
+    }
+
+	rowsAffected,err := SqlResult.RowsAffected()
+	if err != nil{
+		writeJSONError(w,"Internal server Error",http.StatusInternalServerError)
+		return 
+	}
+	if rowsAffected == 0 {
+		writeJSONError(w,"Showtime Not Found",http.StatusNotFound)
+		return
+	}
+
+	writeJSONResponse(w,"Showtime Deleted Successfully",http.StatusOK)
 }

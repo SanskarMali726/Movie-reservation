@@ -1,7 +1,7 @@
 // ==================== Dummy Data ====================
 let moviesData = []; // Changed from const to let
 
-const showtimesData = [];
+let showtimesData = [];
 
 // ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', function() {
@@ -854,6 +854,8 @@ async function loadShowtimes() {
         const response = await fetch("http://localhost:8080/api/getallshowtime");
         const data = await response.json();
 
+        showtimesData = data;
+
         // Clear table
         showtimesTable.innerHTML = "";
 
@@ -1032,15 +1034,40 @@ function editShowtime(id) {
     alert('Edit Showtime functionality will be implemented.');
 }
 
-function deleteShowtime(id) {
-    const showtime = showtimesData.find(function(s) { return s.id === id; });
-    if (showtime) {
-        if (confirm('Are you sure you want to delete this showtime?')) {
-            alert('Showtime deleted successfully!');
-            loadShowtimes();
+async function deleteShowtime(id) {
+    id = Number(id)
+    const showtime = showtimesData.find(s => s.id === id);
+    console.log(id)
+    if (!showtime) {
+        alert("Showtime not found!");
+        return;
+    }
+
+    if (!confirm("Are you sure you want to delete this showtime?")) {
+        return;
+    }
+    try {
+        const response = await fetch(`http://localhost:8080/api/deleteshowtime/${id}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            alert("Error deleting showtime: " + errorText);
+            return;
         }
+
+        alert("Showtime deleted successfully!");
+
+        // Reload the showtime list
+        loadShowtimes();
+
+    } catch (error) {
+        console.error("Delete error:", error);
+        alert("Failed to delete showtime.");
     }
 }
+
 
 // ==================== Utility Functions ====================
 function formatDate(dateString) {
