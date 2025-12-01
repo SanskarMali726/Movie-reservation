@@ -1893,3 +1893,18 @@ table td {
     vertical-align: middle;
 }
 
+.movie-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.movie-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.movie-actions {
+    margin-top: auto;
+}
+

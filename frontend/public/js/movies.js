@@ -40,7 +40,6 @@ function initializeAddMovieForm() {
     });
 }
 
-// ==================== Form Submission ====================
 async function handleFormSubmit(e) {
     e.preventDefault();
     
@@ -108,7 +107,6 @@ async function handleFormSubmit(e) {
     }
 }
 
-// ==================== Upload Poster API ====================
 async function uploadPoster(file) {
     const formData = new FormData();
     formData.append('poster', file);
@@ -138,7 +136,6 @@ async function uploadPoster(file) {
     }
 }
 
-// ==================== Add Movie API ====================
 async function addMovie(movieData) {
     try {
         const response = await fetch('http://localhost:8080/api/addmovie', {
@@ -164,7 +161,6 @@ async function addMovie(movieData) {
     }
 }
 
-// ==================== File Validation ====================
 function validateFile(file) {
     if (!file) {
         return false;
@@ -184,7 +180,6 @@ function validateFile(file) {
     return true;
 }
 
-// ==================== File Upload Handlers ====================
 function handleFileSelect(e) {
     const file = e.target.files[0];
     if (file) {
@@ -247,7 +242,6 @@ function previewPoster(file) {
     reader.readAsDataURL(file);
 }
 
-// ==================== Real-time Preview Updates ====================
 function updatePreview() {
     const title = document.getElementById('movieTitle').value || '-';
     const genre = document.getElementById('movieGenre').value || '-';
@@ -264,7 +258,6 @@ function updatePreview() {
     document.getElementById('previewRating').textContent = rating ? rating + ' / 5' : '-';
 }
 
-// ==================== Reset Form ====================
 function resetForm() {
     document.getElementById('addMovieForm').reset();
     
@@ -284,7 +277,6 @@ function resetForm() {
     document.getElementById('previewRating').textContent = '-';
 }
 
-// ==================== Input Validation Helpers ====================
 document.addEventListener('DOMContentLoaded', function() {
     // Validate rating input (0-5 range)
     const ratingInput = document.getElementById('movieRating');

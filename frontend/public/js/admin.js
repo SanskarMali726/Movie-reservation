@@ -1,9 +1,8 @@
-// ==================== Dummy Data ====================
-let moviesData = []; // Changed from const to let
+
+let moviesData = []; 
 
 let showtimesData = [];
 
-// ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Admin Dashboard Loaded!');
     initializeNavigation();
@@ -16,7 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(updateCurrentTime, 1000);
 });
 
-// ==================== Update Current Time ====================
 function updateCurrentTime() {
     const timeElement = document.querySelector('#currentTime span');
     if (timeElement) {
@@ -32,7 +30,6 @@ function updateCurrentTime() {
     }
 }
 
-// ==================== Navigation ====================
 function initializeNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
     const sections = document.querySelectorAll('.content-section');
@@ -76,7 +73,6 @@ function initializeNavigation() {
     });
 }
 
-// ==================== Sidebar Toggle ====================
 function initializeSidebar() {
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.getElementById('sidebar');
@@ -97,7 +93,6 @@ function initializeSidebar() {
     }
 }
 
-// ==================== Button Handlers ====================
 function initializeButtons() {
     const addMovieBtn = document.getElementById('addMovieBtn');
 
@@ -136,7 +131,6 @@ function initializeButtons() {
 
 }
 
-// ==================== Load Movies ====================
 async function loadMovies() {
     const moviesGrid = document.getElementById('moviesGrid');
     if (!moviesGrid) return;
@@ -277,7 +271,6 @@ function createMovieCard(movie) {
     return card;
 }
 
-// ==================== Movie Modal ====================
 function openMovieModal(movie) {
     // Create modal backdrop
     const modalBackdrop = document.createElement('div');
@@ -640,8 +633,7 @@ function openMovieModal(movie) {
     document.body.appendChild(modalBackdrop);
 }
 
-// ==================== Edit Movie ====================
-function editMovie(movieId) {
+function editMovie(movieId) { 
     console.log("Edit movie called with ID:", movieId);
     
     const movie = moviesData.find(m => m.id === movieId);
@@ -664,24 +656,52 @@ function editMovie(movieId) {
         const durationInput = document.getElementById("movieDuration");
         const releaseDateInput = document.getElementById("movieReleaseDate");
         const languageInput = document.getElementById("movieLanguage");
+        const posterPreview = document.getElementById("posterPreview");
 
+        // ===== Fill form inputs =====
         if (titleInput) titleInput.value = movie.title || "";
         if (genreInput) genreInput.value = movie.genre || "";
         if (descriptionInput) descriptionInput.value = movie.description || "";
         if (ratingInput) ratingInput.value = movie.rating || "";
-        
+
         let durationValue = movie.duration || "";
         if (typeof durationValue === 'string') {
             durationValue = parseInt(durationValue) || "";
         }
         if (durationInput) durationInput.value = durationValue;
-        
-        if (releaseDateInput) releaseDateInput.value = movie.release_date || "";
-        if (languageInput) languageInput.value = movie.language || "";
-        
-        const posterInput = document.getElementById("moviePoster");
-        if (posterInput) posterInput.value = "";
 
+        // Fix release date (convert 2025-12-01T00:00:00Z → 2025-12-01)
+        if (releaseDateInput) {
+            let rawDate = movie.release_date || "";
+            if (rawDate.includes("T")) {
+                rawDate = rawDate.slice(0, 10);
+            }
+            releaseDateInput.value = rawDate;
+        }
+
+        if (languageInput) languageInput.value = movie.language || "";
+
+        const posterInput = document.getElementById("moviePoster");
+        if (posterInput) posterInput.value = "";  // cannot prefill file input
+
+        // ======== Poster Preview for Edit Mode ========
+        if (posterPreview) {
+            if (movie.poster_url) {
+                posterPreview.innerHTML = `
+                    <img src="http://localhost:8080/public${movie.poster_url}" 
+                         alt="Poster Preview" class="preview-img">
+                `;
+            } else {
+                posterPreview.innerHTML = "";
+            }
+        }
+
+        // ======== Update text preview (title, genre, rating, duration) ========
+        if (typeof updatePreview === "function") {
+            updatePreview();  // live preview without user touching fields
+        }
+
+        // ===== Hidden ID to identify edit mode =====
         let movieIdField = document.getElementById("editMovieId");
         if (!movieIdField) {
             movieIdField = document.createElement("input");
@@ -692,23 +712,31 @@ function editMovie(movieId) {
         }
         movieIdField.value = movieId;
 
+        // ===== Replace submit handler with updateMovie() =====
         const submitBtn = document.getElementById("submitBtn");
         if (submitBtn) {
             submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Movie';
+
             const newSubmitBtn = submitBtn.cloneNode(true);
             submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
-            
+
             newSubmitBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 updateMovie(movieId);
             });
         }
-        
+
+        // ===== Optional: Change form title =====
+        const formTitle = document.getElementById("movieFormTitle");
+        if (formTitle) {
+            formTitle.textContent = "Edit Movie";
+        }
+
         console.log("Form populated for editing movie ID:", movieId);
+
     }, 100);
 }
 
-// ==================== Update Movie ====================
 async function updateMovie(movieId) {
     console.log("Updating movie ID:", movieId);
     
@@ -791,6 +819,7 @@ async function updateMovie(movieId) {
         if (moviesLink) moviesLink.click();
         
         await loadMovies();
+        resetForm();
 
     } catch (error) {
         console.error("Error updating movie:", error);
@@ -798,7 +827,6 @@ async function updateMovie(movieId) {
     }
 }
 
-// ==================== Reset Form ====================
 function resetFormToAddMode() {
     const form = document.getElementById("addMovieForm");
     if (form) form.reset();
@@ -814,7 +842,6 @@ function resetFormToAddMode() {
     }
 }
 
-// ==================== Delete Movie ====================
 function deleteMovie(id) {
     const movie = moviesData.find(function(m) { return m.id === id; });
     if (movie) {
@@ -838,7 +865,6 @@ function deleteMovie(id) {
     }
 }
 
-// ==================== Load Showtimes ====================
 async function loadShowtimes() {
     const showtimesTable = document.getElementById('showtimesTable');
     if (!showtimesTable) return;
@@ -891,7 +917,6 @@ async function loadShowtimes() {
         `;
     }
 }
-
 
 function createShowtimeRow(showtime) {
     console.log(showtime);
@@ -962,7 +987,6 @@ function createShowtimeRow(showtime) {
     return row;
 }
 
-// ==================== Chart ====================
 function drawSimpleChart() {
     const canvas = document.getElementById('revenueChart');
     if (!canvas) return;
@@ -1029,7 +1053,6 @@ function drawSimpleChart() {
     }
 }
 
-// ==================== Showtime Actions ====================
 function editShowtime(id) {
     alert('Edit Showtime functionality will be implemented.');
 }
@@ -1068,8 +1091,6 @@ async function deleteShowtime(id) {
     }
 }
 
-
-// ==================== Utility Functions ====================
 function formatDate(dateString) {
     if (!dateString) return "";
 
@@ -1082,7 +1103,6 @@ function formatDate(dateString) {
         day: "numeric"
     });
 }
-
 
 function formatTime(timeString) {
     if (!timeString) return "";
