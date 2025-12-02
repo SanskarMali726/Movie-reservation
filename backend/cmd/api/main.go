@@ -29,7 +29,7 @@ func main() {
 	router.HandleFunc("/api/signup", Signup).Methods("POST")
 	router.HandleFunc("/api/addposter", Addposter).Methods("POST")
 	router.HandleFunc("/api/addmovie", Addmovie).Methods("POST")
-	router.HandleFunc("/api/totalmovie", TotalMovies).Methods("GET")
+	router.HandleFunc("/api/totalmovies", TotalMovies).Methods("GET")
 	router.HandleFunc("/api/totalusers", TotalUsers).Methods("GET")
 	router.HandleFunc("/api/getallmovies", GetAllMovies).Methods("GET")
 	router.HandleFunc("/api/updateposter/{id}", UpdateMoviePoster).Methods("PUT")
@@ -37,7 +37,9 @@ func main() {
 	router.HandleFunc("/api/deletemovie/{id}", DeleteMovies).Methods("DELETE")
 	router.HandleFunc("/api/addshowtime", AddShowtime).Methods("POST")
 	router.HandleFunc("/api/getallshowtime", GetAllShowtime).Methods("GET")
+	router.HandleFunc("/api/updateshowtime/{id}",UpdateShowtime).Methods("PUT")
 	router.HandleFunc("/api/deleteshowtime/{id}",DeleteShowtime).Methods("DELETE")
+
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./frontend/login.html")

@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     drawSimpleChart();
     initializeButtons();
     updateCurrentTime();
+    loadDashboardStats();
     setInterval(updateCurrentTime, 1000);
 });
 
@@ -1054,7 +1055,27 @@ function drawSimpleChart() {
 }
 
 function editShowtime(id) {
-    alert('Edit Showtime functionality will be implemented.');
+    console.log('Edit showtime called with ID:', id);
+    
+    const showtime = showtimesData.find(s => s.id === id);
+    if (!showtime) {
+        console.error('Showtime not found:', id);
+        showNotification('Showtime not found', 'error');
+        return;
+    }
+
+    isEditMode = true;
+    currentEditShowtimeId = id;
+
+    const showtimeModal = document.getElementById('showtimeModal');
+    showtimeModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    loadMoviesForShowtime();
+
+    setTimeout(() => {
+        populateShowtimeForm(showtime);
+    }, 150);
 }
 
 async function deleteShowtime(id) {

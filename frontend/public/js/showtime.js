@@ -1,5 +1,9 @@
 // ==================== Showtime Modal Functionality ====================
 
+// Global variable to track if we're in edit mode
+let isEditMode = false;
+let currentEditShowtimeId = null;
+
 // Initialize showtime modal when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initializeShowtimeModal();
@@ -9,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeShowtimeModal() {
     const addShowtimeBtn = document.getElementById('addShowtimeBtn');
     const showtimeModal = document.getElementById('showtimeModal');
-    const closeShowtimeModal = document.getElementById('closeShowtimeModal');
+    const closeShowtimeModalBtn = document.getElementById('closeShowtimeModal');
     const cancelShowtime = document.getElementById('cancelShowtime');
     const showtimeForm = document.getElementById('addShowtimeForm');
     const screenSelect = document.getElementById('showtimeScreen');
@@ -32,8 +36,8 @@ function initializeShowtimeModal() {
         resetShowtimeForm();
     }
     
-    if (closeShowtimeModal) {
-        closeShowtimeModal.addEventListener('click', closeModal);
+    if (closeShowtimeModalBtn) {
+        closeShowtimeModalBtn.addEventListener('click', closeModal);
     }
     
     if (cancelShowtime) {
@@ -146,10 +150,23 @@ async function loadMoviesForShowtime() {
     }
 }
 
-// ==================== Handle Form Submission ====================
+// ==================== Handle Form Submission (Add or Update) ====================
 async function handleShowtimeSubmit(e) {
     e.preventDefault();
     
+    // Check if we're in edit mode
+    const editIdField = document.getElementById('editShowtimeId');
+    const isEditing = editIdField && editIdField.value;
+
+    if (isEditing) {
+        await handleShowtimeUpdate(e);
+    } else {
+        await handleShowtimeAdd(e);
+    }
+}
+
+// ==================== Add Showtime ====================
+async function handleShowtimeAdd(e) {
     // Get form values
     const movieId = document.getElementById('showtimeMovie').value;
     const screenId = document.getElementById('showtimeScreen').value;
@@ -186,16 +203,15 @@ async function handleShowtimeSubmit(e) {
         price: parseFloat(ticketPrice),
         repeat_days: repeatDays
     };
+    
     console.log('Submitting showtime data:', showtimeData);
     
     try {
-        // Show loading state
         const submitBtn = document.querySelector('.showtime-btn-primary');
         const originalText = submitBtn.innerHTML;
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Adding...</span>';
 
-        // Make API call
         const response = await fetch('http://localhost:8080/api/addshowtime', {
             method: 'POST',
             headers: {
@@ -204,40 +220,231 @@ async function handleShowtimeSubmit(e) {
             body: JSON.stringify(showtimeData)
         });
         
-        
         const data = await response.json();
         
         if (!response.ok) {
             throw new Error(data.error || 'Failed to add showtime');
-        }else{
-            showNotification('Showtime added Successefully','success');
         }
-    
-
         
-    
+        showNotification('Showtime added successfully', 'success');
+        
         document.getElementById('showtimeModal').classList.remove('active');
         document.body.style.overflow = 'auto';
         resetShowtimeForm();
         
-        // Reload showtime s table if function exists
         if (typeof loadShowtimes === 'function') {
             setTimeout(loadShowtimes, 500);
         }
         
-        // Reset button
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
         
     } catch (error) {
         console.error('Error adding showtime:', error);
-        showNotification(error.message || 'Failed to add showtime. Please try again.', 'error');
+        showNotification(error.message || 'Failed to add showtime', 'error');
         
-        // Reset button
         const submitBtn = document.querySelector('.showtime-btn-primary');
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-save"></i> <span>Add Showtime</span>';
     }
+}
+
+// ==================== Update Showtime ====================
+async function handleShowtimeUpdate(e) {
+    const showtimeId = document.getElementById('editShowtimeId').value;
+    
+    // Get form values
+    const movieId = document.getElementById('showtimeMovie').value;
+    const screenId = document.getElementById('showtimeScreen').value;
+    const showDate = document.getElementById('showDate').value;
+    const showTime = document.getElementById('showTime').value;
+    const ticketPrice = document.getElementById('ticketPrice').value;
+    const totalSeats = document.getElementById('totalSeats').value;
+    
+    // Validate
+    if (!movieId || !screenId || !showDate || !showTime || !ticketPrice || !totalSeats) {
+        showNotification('Please fill all required fields', 'error');
+        return;
+    }
+    
+    // Get current showtime to preserve available_seats
+    const currentShowtime = showtimesData.find(s => s.id === parseInt(showtimeId));
+    const currentAvailableSeats = currentShowtime ? currentShowtime.available_seats : parseInt(totalSeats);
+    
+    // Prepare update data
+    const showtimeData = {
+        movie_id: parseInt(movieId),
+        screen_id: parseInt(screenId),
+        show_date: showDate,
+        show_time: showTime,
+        total_seats: parseInt(totalSeats),
+        available_seats: currentAvailableSeats, // Preserve current available seats
+        price: parseFloat(ticketPrice)
+    };
+    
+    console.log('Updating showtime:', showtimeId, showtimeData);
+    
+    try {
+        const submitBtn = document.querySelector('.showtime-btn-primary');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Updating...</span>';
+
+        const response = await fetch(`http://localhost:8080/api/updateshowtime/${showtimeId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(showtimeData)
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to update showtime');
+        }
+        
+        showNotification('Showtime updated successfully', 'success');
+        
+        // Close modal and reset
+        document.getElementById('showtimeModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+        resetShowtimeForm();
+        
+        // Reload showtimes table
+        if (typeof loadShowtimes === 'function') {
+            setTimeout(loadShowtimes, 500);
+        }
+        
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        
+    } catch (error) {
+        console.error('Error updating showtime:', error);
+        showNotification(error.message || 'Failed to update showtime', 'error');
+        
+        const submitBtn = document.querySelector('.showtime-btn-primary');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> <span>Update Showtime</span>';
+    }
+}
+
+// ==================== Edit Showtime (Called from admin.js) ====================
+// Add this function to admin.js
+function editShowtime(id) {
+    console.log('Edit showtime called with ID:', id);
+    
+    // Find the showtime data
+    const showtime = showtimesData.find(s => s.id === id);
+    if (!showtime) {
+        console.error('Showtime not found:', id);
+        showNotification('Showtime not found', 'error');
+        return;
+    }
+
+    // Set edit mode
+    isEditMode = true;
+    currentEditShowtimeId = id;
+
+    // Open the modal
+    const showtimeModal = document.getElementById('showtimeModal');
+    showtimeModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Load movies for the dropdown
+    loadMoviesForShowtime();
+
+    // Wait a bit for modal to load, then populate form
+    setTimeout(() => {
+        populateShowtimeForm(showtime);
+    }, 150);
+}
+
+// ==================== Populate Form with Showtime Data ====================
+function populateShowtimeForm(showtime) {
+    console.log('Populating form with showtime:', showtime);
+
+    // Update modal header
+    const modalHeader = document.querySelector('.showtime-modal-header h2');
+    if (modalHeader) {
+        modalHeader.innerHTML = '<i class="fas fa-edit"></i> Edit Showtime';
+    }
+
+    // Populate form fields
+    const movieSelect = document.getElementById('showtimeMovie');
+    const screenSelect = document.getElementById('showtimeScreen');
+    const showDateInput = document.getElementById('showDate');
+    const showTimeInput = document.getElementById('showTime');
+    const ticketPriceInput = document.getElementById('ticketPrice');
+    const totalSeatsInput = document.getElementById('totalSeats');
+
+    // Set movie (wait for movies to load)
+    if (movieSelect) {
+        movieSelect.value = showtime.movie_id;
+    }
+
+    // Set screen
+    if (screenSelect) {
+        screenSelect.value = showtime.screen_id;
+        // Trigger change event to update seats display
+        const event = new Event('change');
+        screenSelect.dispatchEvent(event);
+    }
+
+    // Set date (format: YYYY-MM-DD)
+    if (showDateInput && showtime.show_date) {
+        let dateStr = showtime.show_date;
+        if (dateStr.includes('T')) {
+            dateStr = dateStr.split('T')[0];
+        }
+        showDateInput.value = dateStr;
+    }
+
+    // Set time (format: HH:MM)
+    if (showTimeInput && showtime.show_time) {
+        let timeStr = showtime.show_time;
+        // Handle full timestamp format
+        if (timeStr.includes('T')) {
+            const parts = timeStr.split('T');
+            timeStr = parts[1] || '';
+        }
+        // Remove seconds and timezone
+        timeStr = timeStr.split(':').slice(0, 2).join(':');
+        showTimeInput.value = timeStr;
+    }
+
+    // Set price
+    if (ticketPriceInput) {
+        ticketPriceInput.value = showtime.price;
+    }
+
+    // Set total seats (this will be auto-filled by screen selection)
+    if (totalSeatsInput) {
+        totalSeatsInput.value = showtime.total_seats;
+    }
+
+    // Hide repeat days section in edit mode
+    const repeatSection = document.querySelector('.showtime-repeat-section');
+    if (repeatSection) {
+        repeatSection.style.display = 'none';
+    }
+
+    // Update submit button
+    const submitBtn = document.querySelector('.showtime-btn-primary');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> <span>Update Showtime</span>';
+    }
+
+    // Add hidden input for showtime ID if not exists
+    let showtimeIdField = document.getElementById('editShowtimeId');
+    if (!showtimeIdField) {
+        showtimeIdField = document.createElement('input');
+        showtimeIdField.type = 'hidden';
+        showtimeIdField.id = 'editShowtimeId';
+        const form = document.getElementById('addShowtimeForm');
+        if (form) form.appendChild(showtimeIdField);
+    }
+    showtimeIdField.value = showtime.id;
 }
 
 // ==================== Reset Form ====================
@@ -247,19 +454,67 @@ function resetShowtimeForm() {
         form.reset();
     }
     
+    // Remove edit mode
+    isEditMode = false;
+    currentEditShowtimeId = null;
+    
+    // Remove hidden ID field
+    const editIdField = document.getElementById('editShowtimeId');
+    if (editIdField) {
+        editIdField.remove();
+    }
+    
+    // Reset modal header
+    const modalHeader = document.querySelector('.showtime-modal-header h2');
+    if (modalHeader) {
+        modalHeader.innerHTML = '<i class="fas fa-clock"></i> Add New Showtime';
+    }
+    
+    // Show repeat section
+    const repeatSection = document.querySelector('.showtime-repeat-section');
+    if (repeatSection) {
+        repeatSection.style.display = 'block';
+    }
+    
     // Reset seat info
-    document.getElementById('seatInfo').style.display = 'none';
-    document.getElementById('totalSeats').value = '';
+    const seatInfo = document.getElementById('seatInfo');
+    if (seatInfo) {
+        seatInfo.style.display = 'none';
+    }
+    
+    const totalSeatsInput = document.getElementById('totalSeats');
+    if (totalSeatsInput) {
+        totalSeatsInput.value = '';
+    }
     
     // Reset custom days
-    document.getElementById('customDaysInput').classList.remove('active');
-    document.getElementById('customDays').required = false;
+    const customDaysInput = document.getElementById('customDaysInput');
+    if (customDaysInput) {
+        customDaysInput.classList.remove('active');
+    }
+    
+    const customDays = document.getElementById('customDays');
+    if (customDays) {
+        customDays.required = false;
+    }
     
     // Reset repeat info
-    document.getElementById('repeatInfoText').textContent = 'The system will create 1 showtime entry';
+    const repeatInfoText = document.getElementById('repeatInfoText');
+    if (repeatInfoText) {
+        repeatInfoText.textContent = 'The system will create 1 showtime entry';
+    }
     
     // Set default values
-    document.getElementById('ticketPrice').value = '150';
+    const ticketPrice = document.getElementById('ticketPrice');
+    if (ticketPrice) {
+        ticketPrice.value = '150';
+    }
+    
+    // Reset submit button
+    const submitBtn = document.querySelector('.showtime-btn-primary');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> <span>Add Showtime</span>';
+    }
     
     // Set minimum date
     setMinDate();
@@ -312,6 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Notification function
 window.showNotification = function(message, type = "success") {
     const notification = document.getElementById("notification");
     if (!notification) return;

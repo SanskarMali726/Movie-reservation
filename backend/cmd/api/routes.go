@@ -215,7 +215,7 @@ func TotalUsers(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]int{
-		"total_User": count,
+		"total_users": count,
 	})
 }
 
@@ -369,97 +369,97 @@ func UpdateMoviePoster(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddShowtime(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodPost {
-        writeJSONError(w, "Invalid Request Method", http.StatusBadRequest)
-        return
-    }
+	if r.Method != http.MethodPost {
+		writeJSONError(w, "Invalid Request Method", http.StatusBadRequest)
+		return
+	}
 
-    var show Showtime
-    err := json.NewDecoder(r.Body).Decode(&show)
-    if err != nil {
-        writeJSONError(w, "Invalid JSON body", http.StatusBadRequest)
-        return
-    }
-    defer r.Body.Close()
+	var show Showtime
+	err := json.NewDecoder(r.Body).Decode(&show)
+	if err != nil {
+		writeJSONError(w, "Invalid JSON body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
 
-    // Validate movie
-    var exists bool
-    err = db.QueryRow(`SELECT EXISTS (SELECT 1 FROM movies WHERE id = $1)`, show.MovieID).Scan(&exists)
-    if err != nil || !exists {
-        writeJSONError(w, "Movie not found", http.StatusNotFound)
-        return
-    }
+	// Validate movie
+	var exists bool
+	err = db.QueryRow(`SELECT EXISTS (SELECT 1 FROM movies WHERE id = $1)`, show.MovieID).Scan(&exists)
+	if err != nil || !exists {
+		writeJSONError(w, "Movie not found", http.StatusNotFound)
+		return
+	}
 
-    // Validate screen
-    err = db.QueryRow(`SELECT EXISTS (SELECT 1 FROM screens WHERE screen_id = $1)`, show.ScreenID).Scan(&exists)
-    if err != nil || !exists {
-        writeJSONError(w, "Screen not found", http.StatusNotFound)
-        return
-    }
+	// Validate screen
+	err = db.QueryRow(`SELECT EXISTS (SELECT 1 FROM screens WHERE screen_id = $1)`, show.ScreenID).Scan(&exists)
+	if err != nil || !exists {
+		writeJSONError(w, "Screen not found", http.StatusNotFound)
+		return
+	}
 
-    // Validate date
-    if show.ShowDate == "" {
-        writeJSONError(w, "Show date is required", http.StatusBadRequest)
-        return
-    }
-    parsedDate, err := time.Parse("2006-01-02", show.ShowDate)
-    if err != nil {
-        writeJSONError(w, "Invalid show date format. Use YYYY-MM-DD", http.StatusBadRequest)
-        return
-    }
+	// Validate date
+	if show.ShowDate == "" {
+		writeJSONError(w, "Show date is required", http.StatusBadRequest)
+		return
+	}
+	parsedDate, err := time.Parse("2006-01-02", show.ShowDate)
+	if err != nil {
+		writeJSONError(w, "Invalid show date format. Use YYYY-MM-DD", http.StatusBadRequest)
+		return
+	}
 
-    today := time.Now().Truncate(24 * time.Hour)
-    if parsedDate.Before(today) {
-        writeJSONError(w, "Show date cannot be in the past", http.StatusBadRequest)
-        return
-    }
+	today := time.Now().Truncate(24 * time.Hour)
+	if parsedDate.Before(today) {
+		writeJSONError(w, "Show date cannot be in the past", http.StatusBadRequest)
+		return
+	}
 
-    // Validate time
-    if show.ShowTime == "" {
-        writeJSONError(w, "Show time is required", http.StatusBadRequest)
-        return
-    }
+	// Validate time
+	if show.ShowTime == "" {
+		writeJSONError(w, "Show time is required", http.StatusBadRequest)
+		return
+	}
 
-    parsedTime, err := time.Parse("15:04", show.ShowTime)
-    if err != nil {
-        writeJSONError(w, "Invalid show time format. Use HH:MM", http.StatusBadRequest)
-        return
-    }
+	parsedTime, err := time.Parse("15:04", show.ShowTime)
+	if err != nil {
+		writeJSONError(w, "Invalid show time format. Use HH:MM", http.StatusBadRequest)
+		return
+	}
 
-    if parsedDate.Equal(today) {
-        now := time.Now()
-        showDateTime := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(),
-            parsedTime.Hour(), parsedTime.Minute(), 0, 0, now.Location())
+	if parsedDate.Equal(today) {
+		now := time.Now()
+		showDateTime := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(),
+			parsedTime.Hour(), parsedTime.Minute(), 0, 0, now.Location())
 
-        if showDateTime.Before(now) {
-            writeJSONError(w, "Show time cannot be in the past", http.StatusBadRequest)
-            return
-        }
-    }
+		if showDateTime.Before(now) {
+			writeJSONError(w, "Show time cannot be in the past", http.StatusBadRequest)
+			return
+		}
+	}
 
-    // Validate repeat
-    if show.RepeatDays < 1 {
-        writeJSONError(w, "Repeat days must be at least 1", http.StatusBadRequest)
-        return
-    }
-    if show.RepeatDays > 31 {
-        writeJSONError(w, "Repeat days too large (max 31)", http.StatusBadRequest)
-        return
-    }
+	// Validate repeat
+	if show.RepeatDays < 1 {
+		writeJSONError(w, "Repeat days must be at least 1", http.StatusBadRequest)
+		return
+	}
+	if show.RepeatDays > 31 {
+		writeJSONError(w, "Repeat days too large (max 31)", http.StatusBadRequest)
+		return
+	}
 
-    // Get movie duration
-    var duration int
-    err = db.QueryRow(`SELECT duration FROM movies WHERE id=$1`, show.MovieID).Scan(&duration)
-    if err != nil {
-        writeJSONError(w, "Movie not found", http.StatusBadRequest)
-        return
-    }
+	// Get movie duration
+	var duration int
+	err = db.QueryRow(`SELECT duration FROM movies WHERE id=$1`, show.MovieID).Scan(&duration)
+	if err != nil {
+		writeJSONError(w, "Movie not found", http.StatusBadRequest)
+		return
+	}
 
-    endTime := parsedTime.Add(time.Duration(duration) * time.Minute)
+	endTime := parsedTime.Add(time.Duration(duration) * time.Minute)
 
-    checkOverlap := func(date string) (bool, error) {
-        var overlap bool
-        err := db.QueryRow(`
+	checkOverlap := func(date string) (bool, error) {
+		var overlap bool
+		err := db.QueryRow(`
             SELECT EXISTS (
                 SELECT 1
                 FROM showtimes
@@ -469,65 +469,64 @@ func AddShowtime(w http.ResponseWriter, r *http.Request) {
                       $4 <= start_time OR $3 >= end_time
                   )
             )`,
-            show.ScreenID,
-            date,
-            parsedTime.Format("15:04"),
-            endTime.Format("15:04"),
-        ).Scan(&overlap)
-        return overlap, err
-    }
+			show.ScreenID,
+			date,
+			parsedTime.Format("15:04"),
+			endTime.Format("15:04"),
+		).Scan(&overlap)
+		return overlap, err
+	}
 
-    insertShowtime := func(date string) error {
-        _, err := db.Exec(`
+	insertShowtime := func(date string) error {
+		_, err := db.Exec(`
             INSERT INTO showtimes (
                 movie_id, screen_id, show_date, start_time, end_time, created_at, updated_at, price
             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
         `,
-            show.MovieID,
-            show.ScreenID,
-            date,
-            show.ShowTime,
-            endTime.Format("15:04"),
-            time.Now(),
-            time.Now(),
-            show.Price,
-        )
-        return err
-    }
+			show.MovieID,
+			show.ScreenID,
+			date,
+			show.ShowTime,
+			endTime.Format("15:04"),
+			time.Now(),
+			time.Now(),
+			show.Price,
+		)
+		return err
+	}
 
-    // COUNTER: to track successful inserts
-    insertedCount := 0
+	// COUNTER: to track successful inserts
+	insertedCount := 0
 
-    for i := 0; i < show.RepeatDays; i++ {
-        newDate := parsedDate.AddDate(0, 0, i).Format("2006-01-02")
+	for i := 0; i < show.RepeatDays; i++ {
+		newDate := parsedDate.AddDate(0, 0, i).Format("2006-01-02")
 
-        overlap, err := checkOverlap(newDate)
-        if err != nil {
-            continue
-        }
-        if overlap {
-            continue
-        }
+		overlap, err := checkOverlap(newDate)
+		if err != nil {
+			continue
+		}
+		if overlap {
+			continue
+		}
 
-        err = insertShowtime(newDate)
-        if err != nil {
-            continue
-        }
+		err = insertShowtime(newDate)
+		if err != nil {
+			continue
+		}
 
-        insertedCount++
-    }
+		insertedCount++
+	}
 
-    //If NO showtimes were inserted → send error
-    if insertedCount == 0 {
-        writeJSONError(w, "Showtime Overlap! Cannot add showtime.", http.StatusConflict)
-        return
-    }
+	//If NO showtimes were inserted → send error
+	if insertedCount == 0 {
+		writeJSONError(w, "Showtime Overlap! Cannot add showtime.", http.StatusConflict)
+		return
+	}
 
-    writeJSONResponse(w, "Showtime(s) Added Successfully", http.StatusCreated)
+	writeJSONResponse(w, "Showtime(s) Added Successfully", http.StatusCreated)
 }
 
-
-func GetAllShowtime(w http.ResponseWriter,r *http.Request){
+func GetAllShowtime(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeJSONError(w, "Invalid Method", http.StatusMethodNotAllowed)
 		return
@@ -561,7 +560,7 @@ func GetAllShowtime(w http.ResponseWriter,r *http.Request){
 
 	for rows.Next() {
 		var show Showtime
-		err = rows.Scan(&show.Id, &show.MovieID,&show.MovieTitle,&show.ScreenID, &show.TotalSeats,&show.AvailableSeats,&show.ShowDate, &show.ShowTime,&show.EndTime,&show.Price)
+		err = rows.Scan(&show.Id, &show.MovieID, &show.MovieTitle, &show.ScreenID, &show.TotalSeats, &show.AvailableSeats, &show.ShowDate, &show.ShowTime, &show.EndTime, &show.Price)
 		if err != nil {
 			writeJSONError(w, "Scan Error", http.StatusInternalServerError)
 			fmt.Println(err)
@@ -572,12 +571,11 @@ func GetAllShowtime(w http.ResponseWriter,r *http.Request){
 
 	json.NewEncoder(w).Encode(shows)
 
-
 }
 
-func DeleteShowtime(w http.ResponseWriter,r *http.Request){
-	if r.Method != http.MethodDelete{
-		writeJSONError(w,"Invalid Method",http.StatusMethodNotAllowed)
+func DeleteShowtime(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		writeJSONError(w, "Invalid Method", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -589,21 +587,157 @@ func DeleteShowtime(w http.ResponseWriter,r *http.Request){
 		return
 	}
 
-	SqlResult, err := db.Exec("DELETE FROM showtimes WHERE id = $1",showId)
-    if err != nil {
-        writeJSONError(w,"Internal Server Error",http.StatusInternalServerError)
-        return
-    }
-
-	rowsAffected,err := SqlResult.RowsAffected()
-	if err != nil{
-		writeJSONError(w,"Internal server Error",http.StatusInternalServerError)
-		return 
-	}
-	if rowsAffected == 0 {
-		writeJSONError(w,"Showtime Not Found",http.StatusNotFound)
+	SqlResult, err := db.Exec("DELETE FROM showtimes WHERE id = $1", showId)
+	if err != nil {
+		writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	writeJSONResponse(w,"Showtime Deleted Successfully",http.StatusOK)
+	rowsAffected, err := SqlResult.RowsAffected()
+	if err != nil {
+		writeJSONError(w, "Internal server Error", http.StatusInternalServerError)
+		return
+	}
+	if rowsAffected == 0 {
+		writeJSONError(w, "Showtime Not Found", http.StatusNotFound)
+		return
+	}
+
+	writeJSONResponse(w, "Showtime Deleted Successfully", http.StatusOK)
+}
+
+func UpdateShowtime(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPut {
+		writeJSONError(w, "Invalid Method", http.StatusMethodNotAllowed)
+		return
+	}
+	var show Showtime
+
+	err := json.NewDecoder(r.Body).Decode(&show)
+	if err != nil {
+		fmt.Println(err)
+		writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	showid, err := strconv.Atoi(id)
+	if err != nil {
+		fmt.Println(err)
+		writeJSONError(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Validate movie
+	var exists bool
+	err = db.QueryRow(`SELECT EXISTS (SELECT 1 FROM movies WHERE id = $1)`, show.MovieID).Scan(&exists)
+	if err != nil || !exists {
+		writeJSONError(w, "Movie not found", http.StatusNotFound)
+		return
+	}
+
+	// Validate screen
+	err = db.QueryRow(`SELECT EXISTS (SELECT 1 FROM screens WHERE screen_id = $1)`, show.ScreenID).Scan(&exists)
+	if err != nil || !exists {
+		writeJSONError(w, "Screen not found", http.StatusNotFound)
+		return
+	}
+
+	// Validate date
+	if show.ShowDate == "" {
+		writeJSONError(w, "Show date is required", http.StatusBadRequest)
+		return
+	}
+	parsedDate, err := time.Parse("2006-01-02", show.ShowDate)
+	if err != nil {
+		writeJSONError(w, "Invalid show date format. Use YYYY-MM-DD", http.StatusBadRequest)
+		return
+	}
+
+	today := time.Now().Truncate(24 * time.Hour)
+	if parsedDate.Before(today) {
+		writeJSONError(w, "Show date cannot be in the past", http.StatusBadRequest)
+		return
+	}
+
+	// Validate time
+	if show.ShowTime == "" {
+		writeJSONError(w, "Show time is required", http.StatusBadRequest)
+		return
+	}
+
+	parsedTime, err := time.Parse("15:04", show.ShowTime)
+	if err != nil {
+		writeJSONError(w, "Invalid show time format. Use HH:MM", http.StatusBadRequest)
+		return
+	}
+
+	if parsedDate.Equal(today) {
+		now := time.Now()
+		showDateTime := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(),
+			parsedTime.Hour(), parsedTime.Minute(), 0, 0, now.Location())
+
+		if showDateTime.Before(now) {
+			writeJSONError(w, "Show time cannot be in the past", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Get movie duration
+	var duration int
+	err = db.QueryRow(`SELECT duration FROM movies WHERE id=$1`, show.MovieID).Scan(&duration)
+	if err != nil {
+		writeJSONError(w, "Movie not found", http.StatusBadRequest)
+		return
+	}
+
+	endTime := parsedTime.Add(time.Duration(duration) * time.Minute)
+
+	var overlap bool
+	err = db.QueryRow(`
+            SELECT EXISTS (
+                SELECT 1
+                FROM showtimes
+                WHERE screen_id = $1
+                  AND show_date = $2
+                  AND NOT (
+                      $4 <= start_time OR $3 >= end_time
+                  )
+            )`,
+		show.ScreenID,
+		show.ShowDate,
+		parsedTime.Format("15:04"),
+		endTime.Format("15:04"),
+	).Scan(&overlap)
+
+	if overlap {
+		writeJSONError(w, "Showtime Overlap!,Cannot add show time", http.StatusBadRequest)
+		return
+	}
+
+	_,err = db.Exec(`UPDATE showtimes 
+		SET 
+    		movie_id = $1,
+    		screen_id = $2,
+    		show_date = $3,
+    		start_time = $4,
+			end_time = $5,
+    		price = $6,
+    		updated_at = CURRENT_TIMESTAMP
+		WHERE 
+    	id = $7`,show.MovieID,show.ScreenID,show.ShowDate,show.ShowTime,endTime,show.Price,showid)
+
+	if err != nil {
+		fmt.Println(err)
+		writeJSONError(w,"Internal Server Error",http.StatusInternalServerError)
+		return
+	}
+
+	writeJSONResponse(w,"Showtime Updated Successfully",http.StatusOK)
+
+
 }
